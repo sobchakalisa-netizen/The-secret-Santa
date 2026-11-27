@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <title>Тайный Санта — вишлисты и жеребьёвка</title>
+    <meta charset="UTF-8">
+    <!-- PROTECTED: meta type -->
+    <meta name="type" value="app" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta property="og:title" content="Тайный Санта">
+    <meta property="og:description" content="Составляйте вишлисты, запускайте жеребьёвку и следите за статусом подарка.">
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&family=Merriweather:ital,wght@0,700;1,400&family=Caveat:wght@600;700&family=Special+Elite&display=swap" rel="stylesheet">
+    <style>
+        *{box-sizing:border-box;margin:0;padding:0}
+        body{font-family:'Manrope',sans-serif;background:#3a1a14 radial-gradient(circle at 20% 10%,#6b3a22 0,#2a100c 60%);background-attachment:fixed;color:#3a1410;line-height:1.55;min-height:100vh}
+        .wrap{background:#f3e6c8;border-radius:36px;border:6px solid #1a0a08;margin:24px auto;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+        h1,h2{font-family:'Caveat',cursive;color:#7a0f12}
+        .hero h1{font-family:'Merriweather',serif;font-style:italic;color:#7a0f12}
+        #snow{position:fixed;inset:0;pointer-events:none;z-index:0}
+        .wrap{position:relative;z-index:1;max-width:1200px;margin:0 auto;padding:28px 24px 80px}
+        header{display:flex;justify-content:space-between;align-items:center;margin-bottom:40px;gap:12px}
+        .logo{font-family:'Caveat',cursive;font-weight:700;font-size:30px;color:#7a0f12;cursor:pointer;display:flex;align-items:center;gap:10px}
+        .btn{border:0;border-radius:999px;padding:12px 22px;font:600 15px 'Manrope',sans-serif;cursor:pointer;background:#7a0f12;color:#f3e6c8;border-radius:8px;transition:.2s;display:inline-flex;align-items:center;gap:8px;text-decoration:none}
+        .btn:hover{background:#5a0a0d;transform:translateY(-1px)}
+        .btn.ghost{background:#e4d3ab;color:#7a0f12}
+        .btn.ghost:hover{background:#d8c392}
+        .btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+        h1{font-size:clamp(34px,6vw,56px);line-height:1.1;font-weight:700}
+        h2{font-size:32px;font-weight:700;margin-bottom:6px}
+        .muted{color:#7a5a48}
+        .hero{text-align:center;margin:30px auto 50px;max-width:680px}
+        .hero p{margin-top:16px;font-size:18px;color:#6b6470}
+        .masonry{columns:3 280px;column-gap:20px}
+        .card{break-inside:avoid;background:#fbf3de;border:1px solid #e0cd9f;border-radius:6px;padding:26px;margin-bottom:20px;transition:.25s;position:relative;box-shadow:0 4px 12px rgba(90,40,20,.12)}
+        .card:nth-child(odd){transform:rotate(-.4deg)}.card:nth-child(even){transform:rotate(.4deg)}
+        .card.hov{cursor:pointer}.card.hov:hover{transform:translateY(-4px);box-shadow:0 10px 30px rgba(33,25,34,.1)}
+        .card .ic{width:48px;height:48px;border-radius:50%;background:#f0d9b0;color:#7a0f12;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:16px}
+        .card.tall{padding-top:40px;padding-bottom:40px}
+        .card.red{background:#7a0f12;color:#f3e6c8}.card.red h2{color:#f3e6c8}.card.red .muted{color:#e8c9b0}
+        .field{display:block;width:100%;border:2px solid #e0cd9f;border-radius:8px;padding:12px 16px;font:400 15px 'Manrope',sans-serif;margin:6px 0 12px;background:#fffaf0;color:#3a1410;outline:none}
+        .field:focus{border-color:#7a0f12}
+        label{font-size:13px;font-weight:600;color:#6b6470}
+        .narrow{max-width:420px;margin:0 auto}
+        .wish{padding:0;overflow:hidden}
+        .wish{background:#fff;padding:0;border:0;border-radius:3px;box-shadow:0 6px 16px rgba(60,20,10,.25)}
+        .wish img{width:100%;display:block;background:#eee;padding:10px 10px 0}
+        .wish .b{padding:16px 18px 18px}
+        .wish h4{font-size:16px;font-weight:600}
+        .wish a{color:#7a0f12;font-size:14px;font-weight:600;text-decoration:none;word-break:break-all}
+        .wish .x{position:absolute;top:12px;right:12px;width:36px;height:36px;border-radius:50%;border:0;background:#fff;color:#211922;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+        .wish .x:hover{background:#e60023;color:#fff}
+        .wish.sel{outline:3px solid #7a0f12}
+        .wl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:22px;margin-bottom:20px;align-items:stretch}
+        .wl-grid .card.wish{margin:0;transform:none;display:flex;flex-direction:column;border-radius:10px;overflow:hidden;transition:.25s}
+        .wl-grid .card.wish:hover{transform:translateY(-4px) rotate(-.4deg);box-shadow:0 14px 30px rgba(60,20,10,.3)}
+        .wish .ph{position:relative;aspect-ratio:4/3;background:repeating-linear-gradient(45deg,#f6ead0,#f6ead0 10px,#f0e0bd 10px,#f0e0bd 20px);display:flex;align-items:center;justify-content:center;color:#b88a5a;font-size:38px;margin:10px 10px 0;border-radius:6px;overflow:hidden}
+        .wish .ph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;padding:0;border-radius:0}
+        .wish .num{position:absolute;top:8px;left:8px;z-index:2;background:#7a0f12;color:#f3e6c8;font:700 12px 'Manrope',sans-serif;border-radius:999px;padding:3px 10px}
+        .wish .acts{position:absolute;top:18px;right:18px;display:flex;gap:6px;z-index:3}
+        .wish .acts .x{position:static;width:34px;height:34px}
+        .wish .b{display:flex;flex-direction:column;gap:10px;flex:1}
+        .wish .b h4{font-size:17px;line-height:1.3;color:#3a1410;word-break:break-word}
+        .wish .lnk{display:inline-flex;align-items:center;gap:6px;align-self:flex-start;background:#f3e6c8;color:#7a0f12;border-radius:999px;padding:6px 14px;font-size:13px}
+        .wish .lnk:hover{background:#e4d3ab}
+        .wish .b .btn{width:100%;justify-content:center;margin-top:auto}
+        .wish .tag{align-self:flex-start;background:#7a0f12;color:#f3e6c8;border-radius:999px;padding:3px 12px;font-size:12px;font-weight:700}
+        .wl-empty{grid-column:1/-1;text-align:center;padding:36px;border:2px dashed #d8c392;border-radius:10px;color:#7a5a48}
+        .pill{display:inline-block;border-radius:999px;padding:4px 12px;font-size:13px;font-weight:600;background:#e9e5df;color:#211922}
+        .pill.ok{background:#dff3e4;color:#1b6b34}
+        .steps{list-style:none;margin-top:14px}
+        .steps li{display:flex;gap:12px;align-items:center;padding:8px 0;color:#9a929f;font-weight:600;font-size:14px}
+        .steps li i{width:30px;height:30px;border-radius:50%;background:#e9e5df;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;color:#9a929f}
+        .steps li.on{color:#3a1410}.steps li.on i{background:#7a0f12;color:#f3e6c8}
+        .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#211922;color:#fff;padding:12px 22px;border-radius:999px;z-index:50;font-weight:600;font-size:14px;animation:up .3s}
+        @keyframes up{from{opacity:0;transform:translate(-50%,12px)}}
+        .row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #f0ece7;flex-wrap:wrap}
+        .row:last-child{border:0}
+        select.field{margin:0;width:auto;padding:8px 12px}
+        .ov{position:fixed;inset:0;background:rgba(243,230,200,.97);z-index:40;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px}
+        .env{width:200px;height:140px;background:#7a0f12;border-radius:10px;position:relative;animation:shake .6s infinite}
+        .env .fl{position:absolute;top:0;left:0;width:0;height:0;border-left:100px solid transparent;border-right:100px solid transparent;border-top:80px solid #b8001b;transform-origin:top;transition:transform .6s;z-index:2}
+        .env.open{animation:none}.env.open .fl{transform:rotateX(180deg);z-index:0}
+        .env .ltr{position:absolute;left:15px;right:15px;top:10px;bottom:10px;background:#fff;border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:20px;color:#211922;transition:transform .7s .3s;z-index:1}
+        .env.open .ltr{transform:translateY(-110px) scale(1.25)}
+        @keyframes shake{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(3deg)}}
+        .reveal{font-family:'Caveat',cursive;font-size:clamp(36px,7vw,64px);font-weight:700;margin-top:110px;color:#7a0f12;opacity:0;transition:.6s}
+        .reveal.show{opacity:1}
+        .tabs{display:flex;gap:10px;margin-bottom:24px;flex-wrap:wrap}
+        #fw{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0}
+        .ov .env,.ov .reveal,.ov p{position:relative;z-index:1}
+        .ov .reveal{font-family:'Special Elite','Caveat',cursive;text-shadow:3px 3px 0 #e4b04a}
+    </style>
+    <meta property="og:type" content="website">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" />
+</head>
+<body>
+<canvas id="snow"></canvas>
+<div class="wrap"><header id="hd"></header><main id="app"></main></div>
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let db=JSON.parse(localStorage.ss_db||'{"users":{}}');
+let me=localStorage.ss_me||null;
+let view=me&&db.users[me]?'me':'home';
+const save=()=>localStorage.ss_db=JSON.stringify(db);
+const U=db.users;
+const ready=n=>U[n].wishes.length>0;
+const eligible=()=>Object.keys(U).filter(ready);
+function toast(t){const e=document.createElement('div');e.className='toast';e.textContent=t;document.body.appendChild(e);setTimeout(()=>e.remove(),2600)}
+function go(v){view=v;render()}
+function status(g){const u=U[g];if(!u.to)return 0;if(u.st>=2)return 4;if(u.st==1)return 3;if(u.pick)return 2;return 1}
+function setSt(g,v){U[g].stDraft=+v}
+function saveSt(g){const d=U[g].stDraft;if(d!==undefined)U[g].st=d;delete U[g].stDraft;save();render();toast('Статус сохранён')}
+const LBL=['Ждём жеребьёвку','Санта получил ваше письмо','Санта выбрал ваш подарок','Санта заказал подарок','Ждите новогоднее чудо'];
+const ICN=['fa-hourglass-half','fa-envelope','fa-gift','fa-truck-fast','fa-star'];
+function taken(){return Object.values(U).map(u=>u.to).filter(Boolean)}
+function pickFor(n){
+  const el=eligible();const tk=taken();
+  let c=el.filter(x=>x!==n&&!tk.includes(x));
+  c=c.filter(x=>{
+    const G=el.filter(g=>g!==n&&!U[g].to);
+    const R=el.filter(r=>!tk.includes(r)&&r!==x);
+    if(G.length==1&&R.length==1&&G[0]===R[0])return false;
+    if(G.length>R.length)return false;
+    return true;
+  });
+  if(!c.length)return null;
+  const r=c[Math.floor(Math.random()*c.length)];
+  U[n].to=r;U[n].pick=null;U[n].st=0;save();return r;
+}
+function envelope(text,cb){
+  const o=document.createElement('div');o.className='ov';
+  o.innerHTML=`<div class="env"><div class="fl"></div><div class="ltr"><i class="fa-solid fa-gift" style="color:#e60023"></i></div></div><div class="reveal">${esc(text)}</div>`;
+  document.body.appendChild(o);
+  const stop=fireworks(o);
+  const oldRemove=o.remove.bind(o);o.remove=()=>{stop();oldRemove()};
+  setTimeout(()=>o.querySelector('.env').classList.add('open'),1400);
+  setTimeout(()=>o.querySelector('.reveal').classList.add('show'),2100);
+  setTimeout(()=>{o.onclick=()=>{o.remove();cb&&cb()}; const h=document.createElement('p');h.className='muted';h.style.marginTop='20px';h.textContent='Нажмите, чтобы закрыть';o.appendChild(h)},2700);
+}
+function fireworks(host){
+  const c=document.createElement('canvas');c.id='fw';host.insertBefore(c,host.firstChild);
+  const g=c.getContext('2d');
+  const sz=()=>{c.width=host.clientWidth;c.height=host.clientHeight};sz();
+  const pal=['#7a0f12','#d9a21b','#e4572e','#2f6f5e','#f3e6c8','#c8372d','#e4b04a'];
+  let P=[],C=[],alive=true,t0=Date.now(),last=0;
+  const rnd=(a,b)=>a+Math.random()*(b-a);
+  function burst(){
+    const x=rnd(c.width*.15,c.width*.85),y=rnd(c.height*.12,c.height*.5);
+    const col=pal[Math.floor(Math.random()*pal.length)];
+    const n=36;
+    for(let i=0;i<n;i++){const a=i/n*Math.PI*2,s=rnd(2,5.5);
+      P.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,l:1,col,r:rnd(1.5,3)})}
+    for(let i=0;i<30;i++){
+      C.push({x,y,vx:rnd(-6,6),vy:rnd(-7,2),w:rnd(6,11),h:rnd(3,6),a:rnd(0,6),va:rnd(-.3,.3),col:pal[Math.floor(Math.random()*pal.length)],l:1})}
+  }
+  function loop(){
+    if(!alive)return;
+    const now=Date.now();
+    if(now-t0>1800&&now-last>420&&now-t0<7000){burst();last=now}
+    g.clearRect(0,0,c.width,c.height);
+    P.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=.06;p.vx*=.985;p.l-=.011;
+      g.globalAlpha=Math.max(p.l,0);g.fillStyle=p.col;g.fillRect(p.x,p.y,p.r*1.6,p.r*1.6)});
+    C.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=.12;p.vx*=.98;p.a+=p.va;p.l-=.006;
+      g.save();g.globalAlpha=Math.max(p.l,0);g.translate(p.x,p.y);g.rotate(p.a);
+      g.fillStyle=p.col;g.fillRect(-p.w/2,-p.h/2,p.w,p.h);g.restore()});
+    P=P.filter(p=>p.l>0);C=C.filter(p=>p.l>0&&p.y<c.height+20);
+    requestAnimationFrame(loop);
+  }
+  loop();
+  return()=>{alive=false};
+}
+function header(){
+  $('#hd').innerHTML=`<div class="logo" onclick="go('${me&&U[me]?'me':'home'}')"><i class="fa-solid fa-snowflake"></i>Тайный Санта</div>
+  <div style="display:flex;gap:8px">${view!=='home'&&!(view==='me')?`<button class="btn ghost" onclick="go('home')"><i class="fa-solid fa-arrow-left"></i>Назад</button>`:''}
+  ${me&&U[me]?`<button class="btn ghost" onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i>Выйти</button>`:''}</div>`;
+}
+function logout(){me=null;localStorage.removeItem('ss_me');go('home')}
+function render(){header();({home,org,login,me:cab})[view]()}
+function home(){
+  $('#app').innerHTML=`<div class="hero"><h1>Новый год начинается с тайны</h1><p>Составьте вишлист, узнайте, кому дарить подарок, и следите за путём вашего сюрприза.</p></div>
+  <div class="masonry">
+   <div class="card hov tall red" onclick="go('login')"><div class="ic"><i class="fa-solid fa-lock"></i></div><h2>Вход для участников</h2><p class="muted">Личный кабинет по паролю: вишлист, ваш получатель и статус подарка.</p></div>
+   <div class="card hov" onclick="go('org')"><div class="ic"><i class="fa-solid fa-shuffle"></i></div><h2>Рандомайзер</h2><p class="muted">Общая жеребьёвка, список готовых участников и статусы подарков.</p></div>
+   <div class="card"><div class="ic"><i class="fa-solid fa-circle-info"></i></div><h2>Как это работает</h2><p class="muted">1. Зарегистрируйтесь и добавьте до 10 желаний.<br>2. В жеребьёвку попадают только участники с заполненным вишлистом.<br>3. Один человек достаётся только одному Санте.</p></div>
+  </div>`;
+}
+function login(){
+  $('#app').innerHTML=`<div class="narrow"><div class="card"><h2>Вход для участников</h2><p class="muted" style="margin-bottom:16px">Нового участника зарегистрируем автоматически.</p>
+  <label>Имя</label><input id="ln" class="field" maxlength="30">
+  <label>Пароль</label><input id="lp" type="password" class="field">
+  <button class="btn" style="width:100%;justify-content:center" onclick="doLogin()">Войти</button></div></div>`;
+}
+function doLogin(){
+  const n=$('#ln').value.trim(),p=$('#lp').value;
+  if(!n||p.length<3)return toast('Введите имя и пароль от 3 символов');
+  if(U[n]){if(U[n].pass!==p)return toast('Неверный пароль')}
+  else{U[n]={pass:p,wishes:[],to:null,pick:null,st:0};save();toast('Вы зарегистрированы')}
+  me=n;localStorage.ss_me=n;go('me');
+}
+function cab(){
+  const u=U[me];if(!u)return logout();
+  const full=u.wishes.length>=10;
+  const giver=Object.keys(U).find(g=>U[g].to===me);
+  const s=giver?status(giver):0;
+  const track=`<ul class="steps">${[1,2,3,4].map(i=>`<li class="${s>=i?'on':''}"><i class="fa-solid ${ICN[i]}"></i>${LBL[i]}</li>`).join('')}</ul>`;
+  let tgt='';
+  if(u.to){const t=U[u.to];
+    tgt=`<div class="card red"><div class="ic" style="background:#fff"><i class="fa-solid fa-gift"></i></div><p class="muted">Вы дарите подарок</p><h2 style="font-size:30px">${esc(u.to)}</h2><p class="muted">Выберите подарок из вишлиста ниже</p></div>`;
+    tgt+=`<div class="card"><div class="ic"><i class="fa-solid fa-truck-fast"></i></div><h2>Статус вашего подарка для ${esc(u.to)}</h2><p class="muted" style="margin-bottom:12px">Отметьте, как продвигается подарок для ${esc(u.to)}</p>
+    <ul class="steps">${[1,2,3,4].map(i=>`<li class="${status(me)>=i?'on':''}"><i class="fa-solid ${ICN[i]}"></i>${LBL[i]}</li>`).join('')}</ul>
+    <select class="field" style="width:100%;margin-top:12px" onchange="setSt('${me.replace(/'/g,"\\'")}',this.value)"><option value="0" ${u.st==0?'selected':''}>Авто</option><option value="1" ${u.st==1?'selected':''}>Санта заказал</option><option value="2" ${u.st==2?'selected':''}>Новогоднее чудо</option></select>
+    <button class="btn" style="margin-top:10px" onclick="saveSt('${me.replace(/'/g,"\\'")}')"><i class="fa-solid fa-floppy-disk"></i>Сохранить статус</button></div>`;
+  }else tgt=`<div class="card"><div class="ic"><i class="fa-solid fa-envelope"></i></div><h2>Кому дарить?</h2><p class="muted" style="margin-bottom:14px">${ready(me)?'Нажмите, чтобы узнать получателя.':'Добавьте хотя бы одно желание, чтобы участвовать.'}</p><button class="btn" ${ready(me)?'':'disabled'} onclick="myDraw()"><i class="fa-solid fa-shuffle"></i>Запустить рандомайзер</button></div>`;
+  let recv='';
+
+  $('#app').innerHTML=`<div class="hero" style="margin-bottom:30px"><h1>Привет, ${esc(me)}</h1></div>
+  <div class="masonry">
+   ${tgt}
+   <div class="card"><h2>Статус вашего подарка</h2><p class="muted">Подарок, который готовит вам Санта</p>${track}
+  </div>
+   <div class="card"><h2>Новое желание <span class="pill">${u.wishes.length}/10</span></h2>
+    <label>Название</label><input id="wt" class="field" maxlength="80" ${full?'disabled':''}>
+    <label>Ссылка с маркетплейса</label><input id="wl" class="field" placeholder="https://" ${full?'disabled':''}>
+    <label>Ссылка на картинку</label><input id="wi" class="field" placeholder="https://" ${full?'disabled':''}>
+    <label>или фото с устройства</label><input id="wf" type="file" accept="image/*" class="field" ${full?'disabled':''} onchange="pickFile(this,'wi')">
+    <button class="btn" ${full?'disabled':''} onclick="addWish()"><i class="fa-solid fa-plus"></i>Добавить</button>
+    ${full?'<p class="muted" style="margin-top:10px">Достигнут лимит в 10 позиций</p>':''}</div>
+   <div class="card"><div class="ic"><i class="fa-solid fa-user-xmark"></i></div><h2>Удалить аккаунт</h2><p class="muted" style="margin-bottom:14px">Профиль и вишлист будут удалены навсегда.</p><button class="btn ghost" onclick="delAccount()"><i class="fa-solid fa-trash"></i>Удалить аккаунт</button></div>
+  </div>
+  <h2 style="margin:40px 0 20px"><i class="fa-solid fa-star" style="color:#d9a21b"></i> Мой вишлист <span class="pill">${u.wishes.length}/10</span></h2>
+  ${wishGrid(u.wishes,true)}
+  ${u.to?`<h2 style="margin:40px 0 20px"><i class="fa-solid fa-gift" style="color:#7a0f12"></i> Что подарить ${esc(u.to)}</h2>${wishGrid(U[u.to].wishes,false,u.pick)}`:''}`;
+}
+function wishCard(w,own,sel,idx){
+  return `<div class="card wish ${sel?'sel':''}"><div class="ph"><i class="fa-solid fa-gift"></i>${w.img?`<img src="${esc(w.img)}" onerror="this.remove()">`:''}${idx?`<span class="num">№ ${idx}</span>`:''}</div>
+  ${own?`<div class="acts"><button class="x" title="Изменить" onclick="editWishOpen('${w.id}')"><i class="fa-solid fa-pen"></i></button><button class="x" title="Удалить" onclick="delWish('${w.id}')"><i class="fa-solid fa-xmark"></i></button></div>`:''}
+  <div class="b">${sel?'<span class="tag"><i class="fa-solid fa-check"></i> Ваш выбор</span>':''}<h4>${esc(w.title)}</h4>${w.link?`<a class="lnk" href="${esc(w.link)}" target="_blank" rel="noopener"><i class="fa-solid fa-arrow-up-right-from-square"></i> Открыть товар</a>`:''}
+  ${own?'':`<button class="btn ${sel?'':'ghost'}" onclick="choose('${w.id}')"><i class="fa-solid fa-check"></i>${sel?'Выбрано':'Подарю это'}</button>`}</div></div>`;
+}
+const wishGrid=(list,own,pick)=>`<div class="wl-grid">${list.map((w,i)=>wishCard(w,own,pick===w.id,i+1)).join('')||'<div class="wl-empty"><i class="fa-solid fa-list-check" style="font-size:28px;display:block;margin-bottom:10px;color:#b88a5a"></i>Список пока пуст</div>'}</div>`;
+function editWishOpen(id){
+  const u=U[me];const w=u.wishes.find(x=>x.id===id);if(!w)return;
+  const o=document.createElement('div');o.className='ov';o.id='editOv';
+  o.innerHTML=`<div class="card" style="max-width:440px;width:100%;text-align:left">
+    <h2 style="margin-bottom:16px">Редактировать желание</h2>
+    <label>Название</label><input id="et" class="field" maxlength="80" value="${esc(w.title)}">
+    <label>Ссылка с маркетплейса</label><input id="el" class="field" placeholder="https://" value="${esc(w.link||'')}">
+    <label>Ссылка на картинку</label><input id="ei" class="field" placeholder="https://" value="${esc((w.img||'').startsWith('data:')?'':w.img||'')}">
+    <label>или фото с устройства</label><input id="ef" type="file" accept="image/*" class="field" onchange="pickFile(this,'ei')">
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:4px">
+      <button class="btn" onclick="editWishSave('${id}')"><i class="fa-solid fa-check"></i>Сохранить</button>
+      <button class="btn ghost" onclick="document.getElementById('editOv').remove()">Отмена</button>
+    </div>
+  </div>`;
+  document.body.appendChild(o);
+}
+const imgData={};
+function pickFile(inp,target){
+  const f=inp.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{const im=new Image();im.onload=()=>{
+    const m=600,k=Math.min(1,m/Math.max(im.width,im.height));
+    const c=document.createElement('canvas');c.width=im.width*k;c.height=im.height*k;
+    c.getContext('2d').drawImage(im,0,0,c.width,c.height);
+    imgData[target]=c.toDataURL('image/jpeg',.75);
+    document.getElementById(target).value='';
+    toast('Фото загружено');
+  };im.src=r.result};
+  r.readAsDataURL(f);
+}
+function editWishSave(id){
+  const u=U[me];const w=u.wishes.find(x=>x.id===id);if(!w)return;
+  const t=document.getElementById('et').value.trim();
+  const l=document.getElementById('el').value.trim();
+  let i=document.getElementById('ei').value.trim();
+  if(!t)return toast('Введите название');
+  const ok=x=>!x||/^https?:\/\//i.test(x);
+  if(!ok(l)||!ok(i))return toast('Ссылки должны начинаться с http');
+  if(imgData.ei){i=imgData.ei;delete imgData.ei}
+  else if(!i&&(w.img||'').startsWith('data:'))i=w.img;
+  w.title=t;w.link=l;w.img=i;save();
+  document.getElementById('editOv').remove();
+  render();toast('Желание обновлено');
+}
+function addWish(){
+  const u=U[me];const t=$('#wt').value.trim();let l=$('#wl').value.trim(),i=$('#wi').value.trim();
+  if(!t)return toast('Введите название');
+  if(u.wishes.length>=10)return toast('Максимум 10 позиций');
+  const ok=x=>!x||/^https?:\/\//i.test(x);
+  if(!ok(l)||!ok(i))return toast('Ссылки должны начинаться с http');
+  if(imgData.wi){i=imgData.wi;delete imgData.wi}
+  u.wishes.push({id:'w'+Date.now(),title:t,link:l,img:i});save();render();toast('Желание добавлено');
+}
+function delWish(id){
+  const u=U[me];u.wishes=u.wishes.filter(w=>w.id!==id);
+  Object.values(U).forEach(x=>{if(x.pick===id)x.pick=null});
+  save();render();toast('Желание удалено');
+}
+function confirmBox(title,text,okLabel,cb){
+  const o=document.createElement('div');o.className='ov';
+  o.innerHTML=`<div class="card" style="max-width:400px;width:100%;text-align:left"><h2>${esc(title)}</h2><p class="muted" style="margin-bottom:20px">${esc(text)}</p><div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn" id="cbOk"><i class="fa-solid fa-trash"></i>${esc(okLabel)}</button><button class="btn ghost" id="cbNo">Отмена</button></div></div>`;
+  document.body.appendChild(o);
+  o.querySelector('#cbNo').onclick=()=>o.remove();
+  o.querySelector('#cbOk').onclick=()=>{o.remove();cb()};
+}
+function delAccount(){
+  confirmBox('Удалить аккаунт?','Аккаунт и весь ваш вишлист будут удалены безвозвратно. Назначенные пары с вашим участием будут сброшены.','Удалить',()=>{
+    const n=me;
+    Object.keys(U).forEach(k=>{if(k!==n&&U[k].to===n){U[k].to=null;U[k].pick=null;U[k].st=0}});
+    delete U[n];save();
+    me=null;localStorage.removeItem('ss_me');go('home');toast('Аккаунт удалён');
+  });
+}
+function choose(id){const u=U[me];u.pick=id;save();render();toast('Санта выбрал ваш подарок')}
+function myDraw(){
+  const r=pickFor(me);
+  if(!r)return toast('Пока нет свободных получателей. Попробуйте позже');
+  envelope(r,render);
+}
+function org(){
+  const names=Object.keys(U);const el=eligible();
+  $('#app').innerHTML=`<div class="hero" style="margin-bottom:30px"><h1>Рандомайзер</h1><p>В жеребьёвке участвуют только те, кто зарегистрирован и заполнил вишлист.</p>
+   <div style="margin-top:24px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap"><button class="btn" onclick="drawAll()" ${el.length<2?'disabled':''}><i class="fa-solid fa-shuffle"></i>Провести жеребьёвку</button>
+   <button class="btn ghost" onclick="resetAll()"><i class="fa-solid fa-rotate-left"></i>Сбросить</button></div></div>
+  <div class="masonry">
+   <div class="card"><h2>Участники</h2><p class="muted" style="margin-bottom:10px">Готовы: ${el.length} из ${names.length}</p>
+    ${names.map(n=>`<div class="row"><b>${esc(n)}</b><span class="pill ${ready(n)?'ok':''}">${ready(n)?'вишлист: '+U[n].wishes.length:'нет вишлиста'}</span></div>`).join('')||'<p class="muted">Пока никого нет</p>'}</div>
+  </div>`;
+}
+function drawAll(){
+  const el=eligible().filter(n=>!U[n].to).sort(()=>Math.random()-.5);
+  if(!el.length)return toast('Все готовые участники уже определены');
+  let c=0;for(const n of el){if(pickFor(n))c++}
+  envelope(c?`Жеребьёвка: ${c} пар`:'Нет свободных пар',()=>{org();if(c<el.length)toast('Часть участников ждёт новых игроков')});
+}
+function resetAll(){Object.values(U).forEach(u=>{u.to=null;u.pick=null;u.st=0});save();org();toast('Жеребьёвка сброшена')}
+// snow
+const cv=$('#snow'),cx=cv.getContext('2d');let fl=[];
+function rs(){cv.width=innerWidth;cv.height=innerHeight}rs();addEventListener('resize',rs);
+for(let i=0;i<70;i++)fl.push({x:Math.random()*innerWidth,y:Math.random()*innerHeight,r:1+Math.random()*3,v:.4+Math.random()*1,d:Math.random()*6});
+(function a(){cx.clearRect(0,0,cv.width,cv.height);cx.fillStyle='rgba(255,240,210,.55)';
+ fl.forEach(f=>{f.y+=f.v;f.d+=.02;f.x+=Math.sin(f.d)*.5;if(f.y>cv.height){f.y=-5;f.x=Math.random()*cv.width}cx.beginPath();cx.arc(f.x,f.y,f.r,0,7);cx.fill()});requestAnimationFrame(a)})();
+render();
+</script>
+</body>
+</html>
